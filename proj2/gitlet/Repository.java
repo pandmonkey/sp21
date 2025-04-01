@@ -122,6 +122,7 @@ public class Repository {
 
         if (addBlobs.containsKey(filename)) {
             deleteSingleStorage(filename);
+            addBlobs.remove(filename);
         }
 
         if (nowHead.fileExists(filename)) {
@@ -173,6 +174,7 @@ public class Repository {
     }
 
     public static void status() throws  IOException {
+
         getStatus();
         printBranches();
         stagedFiles();
@@ -340,6 +342,7 @@ public class Repository {
     }
 
     private static void deleteSingleStorage(String filename) throws IOException {
+
         String nowSHA1 = addBlobs.get(filename);
         File addFile = join(ADD_STORAGE, nowSHA1);
         addFile.delete();
@@ -347,6 +350,10 @@ public class Repository {
 
     @SuppressWarnings("unchecked")
     private static void getStatus() {
+        if (!GITLET_DIR.exists()) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
         ArrayList<Object> tmp = Utils.readObject(STATUS_DOC, ArrayList.class);
         branch2Commit = (HashMap<String, String>) tmp.get(0);
         nowBranch = (String) tmp.get(1);
@@ -387,7 +394,7 @@ public class Repository {
             String p2 = input.secondParent();
             System.out.println("Merge: " + p1.substring(0, 7) + " " + p2.substring(0, 7));
         }
-        Formatter formatter = new Formatter();
+        Formatter formatter = new Formatter(Locale.ENGLISH);
         formatter.format("Date: %1$ta %1$tb %1$td %1$tT %1$tY %1$tz", input.getTimestamp());
         System.out.println(formatter);
         System.out.println(input.getMessage());

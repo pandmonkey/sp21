@@ -10,13 +10,12 @@ public class Main {
     /** Usage: java gitlet.Main ARGS, where ARGS contains
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("Please enter a command.");
             System.exit(0);
         }
         String firstArg = args[0];
-        try {
         switch (firstArg) {
             case "init":
                 Repository.init();
@@ -29,7 +28,7 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                if (args.length != 2) {
+                if (args.length != 2 || args[1].isEmpty()) {
                     System.out.println("Please enter a commit message");
                     System.exit(0);
                 }
@@ -60,9 +59,17 @@ public class Main {
             case "checkout":
                 switch (args.length) {
                     case 3:
+                        if (checkOutErrorOperand(args[1])) {
+                            System.out.println("Incorrect operands.");
+                            System.exit(0);
+                        }
                         Repository.checkoutFile(args[2]);
                         break;
                     case 4:
+                        if (checkOutErrorOperand(args[2])) {
+                            System.out.println("Incorrect operands.");
+                            System.out.println(0);
+                        }
                         Repository.checkout(args[1], args[3]);
                         break;
                     case 2:
@@ -98,10 +105,16 @@ public class Main {
                 }
                 Repository.merge(args[1]);
                 break;
-        }}
-        catch (IOException e) {
-            System.exit(0);
+            default:
+                System.out.println("No command with that name exists.");
         }
-
+    }
+    public static boolean checkOutErrorOperand(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) != '-') {
+                return true;
+            }
+        }
+        return false;
     }
 }
