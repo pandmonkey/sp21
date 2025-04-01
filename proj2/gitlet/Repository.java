@@ -261,6 +261,7 @@ public class Repository {
         getStatus();
         Commit toReset = findDesignatedCmt(commitID);
         resetOrCheckout(toReset);
+        branch2Commit.put(nowBranch, toReset.getSHA1());
         setStatus();
     }
 
