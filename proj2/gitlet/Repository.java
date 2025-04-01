@@ -316,9 +316,9 @@ public class Repository {
             tmp.add(nowBranch);
             tmp.add(addBlobs);
             tmp.add(removalStage);
+            tmp.add(nowHead);
             Utils.writeObject(STATUS_DOC,tmp);
             writeCommit(nowHead);
-
     }
 
     private static void clearStorage() throws IOException {
@@ -359,7 +359,7 @@ public class Repository {
         nowBranch = (String) tmp.get(1);
         addBlobs = (HashMap<String, String>) tmp.get(2);
         removalStage = (ArrayList<String>) tmp.get(3);
-        nowHead = readCommit(branch2Commit.get(nowBranch));
+        nowHead = (Commit) tmp.get(4);
     }
 
     private static void writeCommit(Commit cmt) throws IOException {
