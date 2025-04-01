@@ -71,7 +71,7 @@ public class Main {
                             break;
                         case 4:
                             for (int i = 0; i < args[2].length(); i++) {
-                                if (args[1].charAt(i) != '-') {
+                                if (args[2].charAt(i) != '-') {
                                     System.out.println("Incorrect operands.");
                                     System.exit(0);
                                 }
