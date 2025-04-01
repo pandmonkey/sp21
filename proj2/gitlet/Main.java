@@ -59,16 +59,20 @@ public class Main {
             case "checkout":
                 switch (args.length) {
                     case 3:
-                        if (checkOutErrorOperand(args[1])) {
-                            System.out.println("Incorrect operands.");
-                            System.exit(0);
+                        for (int i = 0; i < args[1].length(); i++) {
+                            if (args[1].charAt(i) != '-') {
+                                System.out.println("Incorrect operands.");
+                                System.exit(0);
+                            }
                         }
                         Repository.checkoutFile(args[2]);
                         break;
                     case 4:
-                        if (checkOutErrorOperand(args[2])) {
-                            System.out.println("Incorrect operands.");
-                            System.out.println(0);
+                        for (int i = 0; i < args[1].length(); i++) {
+                            if (args[1].charAt(i) != '-') {
+                                System.out.println("Incorrect operands.");
+                                System.exit(0);
+                            }
                         }
                         Repository.checkout(args[1], args[3]);
                         break;
@@ -109,12 +113,8 @@ public class Main {
                 System.out.println("No command with that name exists.");
         }
     }
-    public static boolean checkOutErrorOperand(String str) {
-        for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) != '-') {
-                return true;
-            }
-        }
-        return false;
-    }
+
+
+
+
 }
