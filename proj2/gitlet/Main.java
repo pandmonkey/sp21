@@ -70,7 +70,7 @@ public class Main {
                             Repository.checkoutFile(args[2]);
                             break;
                         case 4:
-                            for (int i = 0; i < args[1].length(); i++) {
+                            for (int i = 0; i < args[2].length(); i++) {
                                 if (args[1].charAt(i) != '-') {
                                     System.out.println("Incorrect operands.");
                                     System.exit(0);
