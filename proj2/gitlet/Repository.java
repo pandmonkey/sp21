@@ -42,6 +42,9 @@ public class Repository {
 
     public static Commit nowHead;
 
+    public static boolean getted = false;
+
+
     public static void init() throws IOException {
         if (GITLET_DIR.exists()) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
@@ -59,10 +62,16 @@ public class Repository {
     }  //git init
 
     public static void add(String filename) throws IOException {
-        File toaddFile = new File(CWD, filename);
 
         //恢复程序数据
         getStatus();
+        addHelper(filename);
+
+        setStatus();
+    }
+
+    public static void addHelper(String filename) throws IOException {
+        File toaddFile = new File(CWD, filename);
         if (!toaddFile.exists()) {
             System.out.println("File does not exist.");
             System.exit(0);
@@ -70,10 +79,10 @@ public class Repository {
         Blob tmp = new Blob(toaddFile); //构造好了tmp blob
         File addedFile = new File(ADD_STORAGE, tmp.getSHA1());
         if (nowHead.fileExists(filename) && nowHead.fileContent(filename).equals(tmp.getSHA1())) {
-                //和commit中的内容相同 直接删除得了
-                if (addBlobs.containsKey(filename)) {
-                    deleteSingleStorage(filename);
-                }
+            //和commit中的内容相同 直接删除得了
+            if (addBlobs.containsKey(filename)) {
+                deleteSingleStorage(filename);
+            }
         }
         else {
             if (addBlobs.containsKey(filename)) {
@@ -93,7 +102,6 @@ public class Repository {
             removalStage.remove(filename);
         } //如果删掉的又add 取消对它的删除
 
-        setStatus();
     }
 
     public static void commit(String message) throws IOException {
@@ -351,6 +359,10 @@ public class Repository {
 
     @SuppressWarnings("unchecked")
     private static void getStatus() {
+        if (getted) {
+            return;
+        }
+        getted = true;
         if (!GITLET_DIR.exists()) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
@@ -594,7 +606,6 @@ public class Repository {
         }
 
         Commit mergeCommit = new Commit(current, given, "Merged " + branchName + " into " + nowBranch + ".");
-
         for (String s : allFiles) {
             boolean splitExist = splitFiles.containsKey(s);
             boolean givenExist = givenFiles.containsKey(s);
@@ -603,29 +614,31 @@ public class Repository {
             String gs = givenFiles.get(s);
             String cs = currentFiles.get(s);
             //处理最特殊的情况
+            nowHead = mergeCommit;
             if (splitExist && givenExist && currentExist) {
                 if (sps.equals(cs) && (!sps.equals(gs))) {
                     //1. split 和current同 和 given 不同 checkout到given 并add
                     checkout(given.getSHA1(), s);
-                    add(s);
+                    addHelper(s);
                     continue;
                 }
                 //2.
                 if (sps.equals(gs) && (!sps.equals(cs))) {
-                    add(s);
+                    addHelper(s);
                     continue;
                 }
                 //
             } else if (!splitExist) {
-                if (!givenExist) {
+                if ((!givenExist) && currentExist) {
                     //4. split 没有 只有 current 有: 保持原状
-                    add(s);
+                    addHelper(s);
                     continue;
                 }
-                if (!currentExist) {
+                if ((!currentExist) && givenExist) {
                     //5. split 没有 只有 given 有 checkout & staged
-                    checkout(given.getSHA1(), s);
-                    add(s);
+                    Commit nowCommit = findDesignatedCmt(given.getSHA1());
+                    checkOutCommitHelper(nowCommit, s);
+                    addHelper(s);
                     continue;
                 }
             }
@@ -634,7 +647,7 @@ public class Repository {
                 if (sps.equals(cs)) {
                     if (givenExist) {
                         //3.
-                        add(s);
+                        addHelper(s);
                     }
                     //6.
                     continue; //直接continue
@@ -660,7 +673,7 @@ public class Repository {
                 lst.add(givenBlob.getContent());
                 lst.add(new String(">>>>>>>\n"));
                 Utils.writeContents(sf, lst.toArray());
-                add(s);
+                addHelper(s);
                 continue;
             }
             //一个删了 另一个 变了
@@ -670,12 +683,10 @@ public class Repository {
                 File sf = join(CWD, s);
                 sf.createNewFile();
                 Utils.writeContents(sf, valid.getContent());;
-                add(s);
+                addHelper(s);
             }
         }
         //按需合并
-
-        nowHead = mergeCommit;
 
         for (String s : allFiles) {
             if(!addBlobs.containsKey(s)) {
