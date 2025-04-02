@@ -297,14 +297,14 @@ public class Repository {
         //得到三个结点 进行比较和合并
 
         //split 的两个特殊情况:
-        if (split.equals(givenBranch)) {
+        if (split.getSHA1().equals(givenBranch.getSHA1())) {
             // givenBranch 和split相同
             System.out.println("Given branch is an ancestor of the current branch.");
             System.exit(0);
-        } else if (split.equals(current)) {
+        } else if (split.getSHA1().equals(current.getSHA1())) {
             // currentBranch 和split 相同
             System.out.println("Current branch fast-forwarded.");
-            checkoutBranch(nowBranch); //转到当前分支
+            checkoutBranch(branchName); //转到当前分支
             System.exit(0);
         }
         mergeThreeCommit(split, current, givenBranch, branchName);
@@ -637,11 +637,6 @@ public class Repository {
             String gs = givenFiles.get(s);
             String cs = currentFiles.get(s);
 
-            //test
-//            System.out.println("ID");
-//            System.out.println(myCase);
-//            System.out.println(s);
-            //test
 
             //处理最特殊的情况
             nowHead = mergeCommit;
@@ -718,6 +713,9 @@ public class Repository {
             }
             //一个删了 另一个 变了
             if ((!currentExist) || (!givenExist)) {
+                if ((!currentExist)&&(!givenExist)) {
+                    continue;
+                }
                 conflict = true;
                 myCase = 9;
 
@@ -739,10 +737,6 @@ public class Repository {
         }
         //按需合并
 
-        //test
-//        System.out.println("ID");
-//        System.out.println(myCase);
-        //test
 
         for (String s : allFiles) {
             if(!addBlobs.containsKey(s)) {
