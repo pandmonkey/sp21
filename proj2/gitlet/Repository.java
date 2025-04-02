@@ -570,22 +570,39 @@ public class Repository {
 
     private static Commit getLatestCommonCommit(Commit cmt1, Commit cmt2) {
         //记录一个的路径 在另一个走的过程中不断地查找
-        HashSet<String> route = new HashSet<>();
-        while(true) {
-            route.add(cmt1.getSHA1());
-            if (cmt1.getParent() == null) {
-                break;
+        Map<String, Date> route1 = new HashMap<String, Date>();
+        Map<String, Date> route2 = new HashMap<String, Date>();
+        traversalParents(cmt1, route1);
+        traversalParents(cmt2, route2);
+        Set<String> r1 = route1.keySet();
+        Set<String> r2 = route2.keySet();
+        r1.retainAll(r2);
+
+        String latestCommon = null;
+        Date latest = null;
+        for (String s: r1) {
+            Date d = route1.get(s);
+            if (latest == null || d.after(latest)) {
+                latest  = d;
+                latestCommon = s;
             }
-            cmt1 = readCommit(cmt1.getParent());
         }
-        while(true) {
-            if (route.contains(cmt2.getSHA1())) {
-                return cmt2;
-            }
-            cmt2 = readCommit(cmt2.getParent());
-        }
+        return readCommit(latestCommon);
     }
 
+    private static void traversalParents(Commit cmt, Map<String, Date> st) {
+        st.put(cmt.getSHA1(), cmt.getTimestamp());
+        if (cmt.getParent() == null) {
+            return;
+        }
+        traversalParents(readCommit(cmt.getParent()), st);
+
+        if(cmt.secondParent() == null) {
+            return;
+        }
+        traversalParents(readCommit(cmt.secondParent()), st);
+        return;
+    }
     private static void mergeThreeCommit(Commit split, Commit current, Commit given, String branchName) throws IOException {
         Set<String> allFiles = new HashSet<>();
         allFiles.addAll(split.getFileNames().keySet());
