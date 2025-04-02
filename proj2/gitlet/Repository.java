@@ -624,7 +624,7 @@ public class Repository {
                 }
                 if (!currentExist) {
                     //5. split 没有 只有 given 有 checkout & staged
-                    checkoutFile(gs);
+                    checkout(given.getSHA1(), s);
                     add(s);
                     continue;
                 }
@@ -686,7 +686,7 @@ public class Repository {
     //已知该文件是修改的文件 如果文件在 目录中 且没有被 跟踪 那么就
     private static boolean checkIfUntracked(Commit cmt, String fileName) {
         File file = Utils.join(CWD, fileName);
-        return !file.exists() || (cmt.fileExists(fileName));
+        return file.exists() && (!cmt.fileExists(fileName));
     }
 
     private static boolean checkThreeMorD(Commit split, Commit current, Commit given, String fileName) {
