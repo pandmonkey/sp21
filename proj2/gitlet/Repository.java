@@ -597,6 +597,8 @@ public class Repository {
         boolean conflict = false;
         //先挑选需要修改或删除的情况 check 一遍
 
+
+
         for (String s : allFiles) {
             if (checkThreeMorD(split, current, given, s)) {
                 if (checkIfUntracked(current, s)) {
@@ -762,7 +764,17 @@ public class Repository {
         String sps = splitFiles.get(fileName);
         String gs = givenFiles.get(fileName);
         String cs = currentFiles.get(fileName);
+
+        List<String> lst = Utils.plainFilenamesIn(CWD);
+        for (String s: lst) {
+            File file = join(CWD, s);
+            if (given.fileExists(s) && (!nowHead.fileExists(s))) {
+                return true;
+            }
+        }
+
         if (splitExist && givenExist && currentExist) {
+            //split跟踪 given有 当前有
             return (sps.equals(cs) && (!sps.equals(gs)));
         } else if ((!givenExist) && splitExist && currentExist) {
             return sps.equals(cs);
