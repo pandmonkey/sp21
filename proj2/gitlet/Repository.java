@@ -594,6 +594,7 @@ public class Repository {
         HashMap<String, String> splitFiles = split.getFileNames();
         HashMap<String, String> currentFiles = current.getFileNames();
         HashMap<String, String> givenFiles = given.getFileNames();
+        boolean conflict = false;
         //先挑选需要修改或删除的情况 check 一遍
 
         for (String s : allFiles) {
@@ -606,6 +607,9 @@ public class Repository {
         }
 
         Commit mergeCommit = new Commit(current, given, "Merged " + branchName + " into " + nowBranch + ".");
+        int myCase = -1;
+
+
         for (String s : allFiles) {
             boolean splitExist = splitFiles.containsKey(s);
             boolean givenExist = givenFiles.containsKey(s);
@@ -613,6 +617,13 @@ public class Repository {
             String sps = splitFiles.get(s);
             String gs = givenFiles.get(s);
             String cs = currentFiles.get(s);
+
+            //test
+//            System.out.println("ID");
+//            System.out.println(myCase);
+//            System.out.println(s);
+            //test
+
             //处理最特殊的情况
             nowHead = mergeCommit;
             if (splitExist && givenExist && currentExist) {
@@ -620,11 +631,13 @@ public class Repository {
                     //1. split 和current同 和 given 不同 checkout到given 并add
                     checkout(given.getSHA1(), s);
                     addHelper(s);
+                    myCase = 1;
                     continue;
                 }
                 //2.
                 if (sps.equals(gs) && (!sps.equals(cs))) {
                     addHelper(s);
+                    myCase = 2;
                     continue;
                 }
                 //
@@ -632,13 +645,16 @@ public class Repository {
                 if ((!givenExist) && currentExist) {
                     //4. split 没有 只有 current 有: 保持原状
                     addHelper(s);
+                    myCase = 3;
                     continue;
+
                 }
                 if ((!currentExist) && givenExist) {
                     //5. split 没有 只有 given 有 checkout & staged
                     Commit nowCommit = findDesignatedCmt(given.getSHA1());
                     checkOutCommitHelper(nowCommit, s);
                     addHelper(s);
+                    myCase = 4;
                     continue;
                 }
             }
@@ -647,21 +663,25 @@ public class Repository {
                 if (sps.equals(cs)) {
                     if (givenExist) {
                         //3.
+                        myCase = 5;
                         addHelper(s);
                     }
                     //6.
+                    myCase = 6;
                     continue; //直接continue
                 }
             }
             //7.
             if (splitExist && givenExist && (!currentExist)) {
                 if (sps.equals(gs)) {
+                    myCase = 7;
                     continue;
                 }
             }
             //8. conflict
             // 都变了
             if ((currentExist && givenExist && (!cs.equals(gs)))) {
+                conflict = true;
                 Blob currentBlob = readBlob(cs);
                 Blob givenBlob = readBlob(gs);
                 Utils.restrictedDelete(s);
@@ -674,19 +694,36 @@ public class Repository {
                 lst.add(new String(">>>>>>>\n"));
                 Utils.writeContents(sf, lst.toArray());
                 addHelper(s);
+                myCase = 8;
                 continue;
             }
             //一个删了 另一个 变了
             if ((!currentExist) || (!givenExist)) {
-                Blob valid = currentExist ? readBlob(cs) : readBlob(gs);
+                conflict = true;
+                myCase = 9;
+
+                Blob currentBlob = currentExist ? readBlob(cs) : null;
+                Blob givenBlob = givenExist ? readBlob(gs) : null;
+                List<Object> lst = new ArrayList<Object>();
+                lst.add(new String("<<<<<<< HEAD\n"));
+                lst.add(currentExist ? currentBlob.getContent() : "");
+                lst.add(new String("=======\n"));
+                lst.add(givenExist ? givenBlob.getContent() : "");
+                lst.add(new String(">>>>>>>\n"));
+
                 Utils.restrictedDelete(s);
                 File sf = join(CWD, s);
                 sf.createNewFile();
-                Utils.writeContents(sf, valid.getContent());;
+                Utils.writeContents(sf, lst.toArray());
                 addHelper(s);
             }
         }
         //按需合并
+
+        //test
+//        System.out.println("ID");
+//        System.out.println(myCase);
+        //test
 
         for (String s : allFiles) {
             if(!addBlobs.containsKey(s)) {
@@ -695,6 +732,10 @@ public class Repository {
                     f.delete();
                 }
             }
+        }
+
+        if (conflict) {
+            System.out.println("Encountered a merge conflict.");
         }
         clearStorage();
         removalDelete();
