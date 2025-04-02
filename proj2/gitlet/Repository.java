@@ -642,7 +642,7 @@ public class Repository {
             }
             //7.
             if (splitExist && givenExist && (!currentExist)) {
-                if (sps.equals(cs)) {
+                if (sps.equals(gs)) {
                     continue;
                 }
             }
@@ -674,7 +674,17 @@ public class Repository {
             }
         }
         //按需合并
+
         nowHead = mergeCommit;
+
+        for (String s : allFiles) {
+            if(!addBlobs.containsKey(s)) {
+                File f = join(CWD, s);
+                if (f.exists()) {
+                    f.delete();
+                }
+            }
+        }
         clearStorage();
         removalDelete();
         nowHead.setSHA1();
@@ -684,6 +694,7 @@ public class Repository {
     }
 
     //已知该文件是修改的文件 如果文件在 目录中 且没有被 跟踪 那么就
+
     private static boolean checkIfUntracked(Commit cmt, String fileName) {
         File file = Utils.join(CWD, fileName);
         return file.exists() && (!cmt.fileExists(fileName));
